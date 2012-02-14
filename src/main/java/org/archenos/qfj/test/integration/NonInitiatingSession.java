@@ -11,17 +11,16 @@ import quickfix.Message;
 import quickfix.ScreenLogFactory;
 import quickfix.Session;
 import quickfix.SessionFactory;
-import quickfix.SessionID;
 import quickfix.SessionNotFound;
 import quickfix.SessionSettings;
 import quickfix.ThreadedSocketAcceptor;
 
 public final class NonInitiatingSession {
-    private final SessionConfig config;
+    private final NonInitiatingSessionConfig config;
     private Acceptor acceptor;
     private IntegrationTestApplication app = new IntegrationTestApplication();
     
-    public NonInitiatingSession(SessionConfig config) {
+    public NonInitiatingSession(NonInitiatingSessionConfig config) {
         super();
         this.config = config;
     }
@@ -42,27 +41,8 @@ public final class NonInitiatingSession {
         SessionFactory sessionFactory = new DefaultSessionFactory(app, new MemoryStoreFactory(),
                 new ScreenLogFactory(true, true, true));
 
-        SessionSettings settings = new SessionSettings();
-        SessionID sessionId = new SessionID("FIX.4.2", config.getSenderCompId(), config.getTargetCompId());
+        SessionSettings settings = config.getRawSettings();
 
-        settings.setString(sessionId, SessionFactory.SETTING_CONNECTION_TYPE, SessionFactory.ACCEPTOR_CONNECTION_TYPE);
-        settings.setString(sessionId, SessionSettings.BEGINSTRING, "FIX.4.2");
-        settings.setString(sessionId, "ResetOnDisconnect", "Y");
-        settings.setString(sessionId, "ResetOnLogout", "Y");
-        settings.setString(sessionId, "DataDictionary", "FLEX_FX_FIX42.xml");
-        settings.setString(sessionId, "StartTime", "00:00:00");
-        settings.setString(sessionId, "EndTime", "00:00:00");
-        settings.setString(sessionId, "NonStopSession", "Y");
-        settings.setLong(sessionId, "LogonTimeout", 30);
-        settings.setBool(sessionId, Session.SETTING_CHECK_LATENCY, false);
-
-        settings.setString(sessionId, SessionSettings.SENDERCOMPID, config.getSenderCompId());
-        settings.setString(sessionId, SessionSettings.TARGETCOMPID, config.getTargetCompId());
-        settings.setString(sessionId, Acceptor.SETTING_SOCKET_ACCEPT_PROTOCOL, "TCP");
-        settings.setString(sessionId, Acceptor.SETTING_SOCKET_ACCEPT_ADDRESS, config.getHost());
-        settings.setString(sessionId, Acceptor.SETTING_SOCKET_ACCEPT_PORT, String.valueOf(config.getPort()));
-        settings.setLong(sessionId, "HeartBtInt", config.getHeartbeatInterval());
-        
         LogonListener listener = new LogonListener();
         app.addListener(listener);
         acceptor = new ThreadedSocketAcceptor(sessionFactory, settings);
